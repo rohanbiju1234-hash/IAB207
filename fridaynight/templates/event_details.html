@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} — FridayNight{% endblock %}
+{% block content %}
+
+  <div class="container py-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Events</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('main.index', category=event.category) }}">{{ event.category }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ event.title }}</li>
+      </ol>
+    </nav>
+
+    <div class="row g-5">
+      <!-- left: event info -->
+      <div class="col-lg-7">
+        <img src="{{ url_for('static', filename='img/' + event.image_filename) if event.image_filename else url_for('static', filename='img/concert.avif') }}"
+             class="img-fluid rounded-3 mb-4 w-100" alt="{{ event.title }}" style="aspect-ratio:16/10;object-fit:cover;">
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+          <span class="status-badge status-{{ event.status|lower|replace(' ', '') }}">{{ event.status }}</span>
+          <span class="badge rounded-pill bg-paper-dim text-dark border">{{ event.category }}</span>
+        </div>
+
+        <h1 class="h2 mb-3">{{ event.title }}</h1>
+        {% if event.artist %}<p class="text-muted">Featuring {{ event.artist }}</p>{% endif %}
+
+        <div class="row g-3 mb-4">
+          <div class="col-sm-4">
+            <div class="d-flex align-items-start gap-2">
+              <i class="bi bi-calendar-event text-gold fs-5"></i>
+              <div>
+                <div class="fw-semibold small">Date</div>
+                <div class="text-muted small">{{ event.event_date.strftime('%a, %d %b %Y') }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-4">
+            <div class="d-flex align-items-start gap-2">
+              <i class="bi bi-clock text-gold fs-5"></i>
+              <div>
+                <div class="fw-semibold small">Time</div>
+                <div class="text-muted small">{{ event.start_time.strftime('%I:%M %p') }}{% if event.end_time %} – {{ event.end_time.strftime('%I:%M %p') }}{% endif %}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-4">
+            <div class="d-flex align-items-start gap-2">
+              <i class="bi bi-geo-alt text-gold fs-5"></i>
+              <div>
+                <div class="fw-semibold small">Venue</div>
+                <div class="text-muted small">{{ event.venue }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="h5">About this event</h2>
+        <p class="text-muted" style="white-space: pre-line;">{{ event.description }}</p>
+
+        <!-- Acknowledgement of Country, shown if the creator selected one -->
+        {% if event.acknowledgement_type != 'none' %}
+        <div class="p-3 mb-4 rounded-3" style="background:var(--bs-paper-dim, #f6f2e9); border:1px solid #e3dbc8;">
+          <h2 class="h6 mb-2"><i class="bi bi-flag me-1"></i> Acknowledgement of Country</h2>
+          {% if event.acknowledgement_type == 'enhanced' and event.acknowledgement_text %}
+            <p class="mb-1">{{ event.acknowledgement_text }}</p>
+            {% if event.traditional_custodians %}<p class="text-muted small mb-0">Traditional Custodians: {{ event.traditional_custodians }}</p>{% endif %}
+          {% else %}
+            <p class="mb-0 text-muted">We acknowledge the Traditional Custodians of the land on which this event takes place, and pay respect to Elders past, present and emerging.</p>
+          {% endif %}
+          <a href="{{ url_for('main.acknowledgement_info') }}" class="small">Learn what this means &raquo;</a>
+        </div>
+        {% endif %}
+
+        {% if event.owner_id == current_user.id %}
+        <div class="d-flex gap-2 mb-4">
+          <a href="{{ url_for('main.edit_event', event_id=event.id) }}" class="btn btn-outline-secondary btn-sm">Edit event</a>
+          {% if event.status != 'Cancelled' %}
+          <form method="post" action="{{ url_for('main.cancel_event', event_id=event.id) }}" onsubmit="return confirm('Cancel this event?');">
+            <button type="submit" class="btn btn-outline-danger btn-sm">Cancel event</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- comments -->
+        <section class="mt-5">
+          <h2 class="h5 mb-3">Comments <span class="text-muted fw-normal">({{ comments|length }})</span></h2>
+
+          {% if current_user.is_authenticated %}
+          <form method="post" class="mb-4">
+            {{ comment_form.hidden_tag() }}
+            <input type="hidden" name="form_name" value="comment">
+            <div class="row g-2">
+              <div class="col-12">
+                {{ comment_form.body(class="form-control", rows="2") }}
+                {% for error in comment_form.body.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+              </div>
+              <div class="col-12 text-end">
+                <button class="btn btn-gold mt-2" type="submit">Post</button>
+              </div>
+            </div>
+          </form>
+          {% else %}
+          <p class="text-muted small">
+            <a href="{{ url_for('main.login', next=request.path) }}">Log in</a> to leave a comment.
+          </p>
+          {% endif %}
+
+          <div id="commentList">
+            {% for comment in comments %}
+            <div class="comment-item d-flex gap-3 mb-3">
+              <div class="comment-avatar">{{ comment.author.first_name[0] }}{{ comment.author.last_name[0] }}</div>
+              <div>
+                <div class="d-flex align-items-center gap-2">
+                  <strong>{{ comment.author.full_name }}</strong>
+                  <span class="text-muted small">{{ comment.created_at.strftime('%d %b %Y') }}</span>
+                </div>
+                <p class="mb-0 mt-1">{{ comment.body }}</p>
+              </div>
+            </div>
+            {% else %}
+            <p class="text-muted small">No comments yet - be the first to say something!</p>
+            {% endfor %}
+          </div>
+        </section>
+      </div>
+
+      <!-- right: booking box -->
+      <div class="col-lg-5">
+        <div class="ticket-card sticky-top" style="top: 90px;">
+          <div class="ticket-header">
+            <div class="small text-uppercase" style="letter-spacing:.05em; color:var(--gold);">Book your spot</div>
+            <div class="h5 mb-0 mt-1">{{ event.title }}</div>
+          </div>
+          <div class="ticket-perforation"></div>
+          <div class="ticket-body">
+
+            {% if event.status != 'Open' %}
+              <p class="text-center text-muted mb-0">This event is <strong>{{ event.status }}</strong> and isn't currently accepting bookings.</p>
+            {% elif current_user.is_authenticated %}
+              <form method="post">
+                {{ booking_form.hidden_tag() }}
+                <input type="hidden" name="form_name" value="booking">
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Ticket type</label>
+                  {{ booking_form.ticket_type(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Number of tickets</label>
+                  {{ booking_form.quantity(class="form-control", min="1", max="10") }}
+                  {% for error in booking_form.quantity.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                  <div class="form-text">Max 10 tickets per booking. {{ event.capacity - event.tickets_sold }} left.</div>
+                </div>
+                <button type="submit" class="btn btn-gold w-100 py-2 fw-semibold">
+                  <i class="bi bi-ticket-perforated me-1"></i> Book now
+                </button>
+              </form>
+            {% else %}
+              <p class="text-muted text-center">
+                <a href="{{ url_for('main.login', next=request.path) }}">Log in</a> to book tickets for this event.
+              </p>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

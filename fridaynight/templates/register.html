@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Register — FridayNight{% endblock %}
+{% block content %}
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <h1 class="h2 mb-4">Create your account</h1>
+        <form method="post">
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            <div class="col-sm-6">
+              {{ form.first_name.label(class="form-label") }}
+              {{ form.first_name(class="form-control") }}
+              {% for error in form.first_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-sm-6">
+              {{ form.last_name.label(class="form-label") }}
+              {{ form.last_name(class="form-control") }}
+              {% for error in form.last_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              {{ form.email.label(class="form-label") }}
+              {{ form.email(class="form-control") }}
+              {% for error in form.email.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-sm-6">
+              {{ form.contact_number.label(class="form-label") }}
+              {{ form.contact_number(class="form-control") }}
+              {% for error in form.contact_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-sm-6">
+              {{ form.street_address.label(class="form-label") }}
+              {{ form.street_address(class="form-control") }}
+              {% for error in form.street_address.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-sm-6">
+              {{ form.password.label(class="form-label") }}
+              {{ form.password(class="form-control") }}
+              {% for error in form.password.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-sm-6">
+              {{ form.confirm_password.label(class="form-label") }}
+              {{ form.confirm_password(class="form-control") }}
+              {% for error in form.confirm_password.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+          <div class="mt-4">
+            {{ form.submit(class="btn btn-gold w-100 fw-semibold") }}
+          </div>
+        </form>
+        <p class="text-muted small mt-3">Already have an account? <a href="{{ url_for('main.login') }}">Log in</a>.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

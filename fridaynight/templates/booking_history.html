@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}My bookings — FridayNight{% endblock %}
+{% block content %}
+
+  <div class="container py-5">
+    <div class="mb-4">
+      <h1 class="h2 mb-1">My bookings</h1>
+      <p class="text-muted">Every event you've booked, with your order details for reference.</p>
+    </div>
+
+    <div class="d-flex flex-column gap-3">
+      {% for booking in bookings %}
+      <div class="booking-row d-flex flex-column flex-sm-row gap-3 align-items-sm-center">
+        <img src="{{ url_for('static', filename='img/' + booking.event.image_filename) if booking.event.image_filename else url_for('static', filename='img/concert.avif') }}" class="booking-thumb" alt="{{ booking.event.title }}">
+        <div class="flex-grow-1">
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <h2 class="h6 mb-0">{{ booking.event.title }}</h2>
+            <span class="status-badge status-{{ booking.event.status|lower|replace(' ', '') }}">{{ booking.event.status }}</span>
+          </div>
+          <div class="text-muted small order-id mt-1">Order #{{ booking.order_reference }}</div>
+          <div class="text-muted small"><i class="bi bi-clock-history me-1"></i>Booked on {{ booking.booked_at.strftime('%d %b %Y, %I:%M %p') }} · {{ booking.quantity }} ticket{{ 's' if booking.quantity != 1 else '' }} ({{ booking.ticket_type }}) · ${{ '%.2f'|format(booking.total_price) }}</div>
+        </div>
+        <a href="{{ url_for('main.event_details', event_id=booking.event.id) }}" class="btn btn-outline-secondary btn-sm align-self-start align-self-sm-center">View event</a>
+      </div>
+      {% else %}
+      <p class="text-muted">You haven't booked any events yet. <a href="{{ url_for('main.index') }}">Browse events</a> to get started.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+{% endblock %}

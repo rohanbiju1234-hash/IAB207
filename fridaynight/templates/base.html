@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}FridayNight — Find and book local events{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='style/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+  <!-- navbar: same on every page, now driven by real login state -->
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-FridayNight sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('main.index') }}">FridayNight<span class="brand-dot">.</span></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMain">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}" href="{{ url_for('main.index') }}">Browse events</a></li>
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'main.create_event' %}active{% endif %}" href="{{ url_for('main.create_event') }}">Create event</a></li>
+          {% if current_user.is_authenticated %}
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'main.my_events' %}active{% endif %}" href="{{ url_for('main.my_events') }}">My events</a></li>
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'main.booking_history' %}active{% endif %}" href="{{ url_for('main.booking_history') }}">My bookings</a></li>
+          {% endif %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('main.acknowledgement_info') }}">Acknowledgement of Country</a></li>
+        </ul>
+        <span class="navbar-text d-flex align-items-center gap-2 text-white-50 small me-3">
+          {% if current_user.is_authenticated %}
+            <i class="bi bi-person-circle"></i> Logged in as<strong class="text-white ms-1">{{ current_user.first_name }}</strong>
+            <a href="{{ url_for('main.logout') }}" class="text-white-50 ms-2">(Log out)</a>
+          {% else %}
+            <a href="{{ url_for('main.login') }}" class="text-white ms-1">Log in</a>
+            <span>/</span>
+            <a href="{{ url_for('main.register') }}" class="text-white">Register</a>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- flash messages: shown for form errors, login feedback, booking confirmations etc -->
+  <div class="container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'danger' if category == 'danger' else category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  {% block content %}{% endblock %}
+
+  <!-- footer -->
+  <footer class="site-footer py-4 mt-4">
+    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 small">
+      <span>&copy; 2026 FridayNight. Coursework project - IAB207.</span>
+      <div class="d-flex gap-3">
+        <a href="{{ url_for('main.index') }}">Browse</a>
+        <a href="{{ url_for('main.create_event') }}">Create event</a>
+        <a href="{{ url_for('main.acknowledgement_info') }}">Acknowledgement of Country</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

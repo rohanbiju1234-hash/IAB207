@@ -1,0 +1,344 @@
+/* =========================================================
+   FridayNight — Event Management prototype
+   Design tokens
+   ========================================================= */
+:root {
+  --ink: #1B1F3B;        /* deep indigo — nav, headings, footer */
+  --ink-soft: #3C4270;   /* secondary indigo */
+  --gold: #E3B23C;       /* primary accent — CTAs, highlights */
+  --gold-deep: #C6941F;
+  --paper: #F7F5F0;      /* warm off-white page background */
+  --paper-dim: #EFEBE1;
+  --green-open: #2F6F4E;
+  --grey-inactive: #7A7566;
+  --red-cancelled: #ab4b3a;
+  --ink-line: rgba(27, 31, 59, 0.12);
+ 
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-body: "Work Sans", "Segoe UI", sans-serif;
+}
+ 
+html { scroll-behavior: smooth; }
+ 
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  line-height: 1.55;
+}
+ 
+h1, h2, h3, h4, .display-serif {
+  font-family: var(--font-display);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+ 
+a { color: var(--ink); }
+a:hover { color: var(--gold-deep); }
+ 
+/* Focus visibility (accessibility) */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--gold-deep);
+  outline-offset: 2px;
+}
+ 
+/* Navbar */
+.navbar-FridayNight {
+  background-color: var(--ink);
+}
+.navbar-FridayNight .navbar-brand {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--paper);
+}
+.navbar-FridayNight .navbar-brand .brand-dot { color: var(--gold); }
+.navbar-FridayNight .nav-link {
+  color: rgba(247, 245, 240, 0.8);
+  font-weight: 500;
+}
+.navbar-FridayNight .nav-link.active,
+.navbar-FridayNight .nav-link:hover {
+  color: var(--paper);
+}
+.btn-gold {
+  background-color: var(--gold);
+  border-color: var(--gold);
+  color: var(--ink);
+  font-weight: 600;
+}
+.btn-gold:hover {
+  background-color: var(--gold-deep);
+  border-color: var(--gold-deep);
+  color: var(--ink);
+}
+.btn-outline-FridayNight {
+  border-color: var(--paper);
+  color: var(--paper);
+}
+.btn-outline-FridayNight:hover {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+ 
+/* Hero */
+.hero {
+  background-color: var(--ink);
+  color: var(--paper);
+  padding: 4.5rem 0 5.5rem;
+}
+.hero h1 {
+  color: var(--paper);
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  max-width: 14ch;
+}
+.hero p.lead {
+  color: rgba(247, 245, 240, 0.78);
+  max-width: 46ch;
+}
+.hero-search {
+  background: var(--paper);
+  border-radius: 0.6rem;
+  padding: 0.5rem;
+}
+ 
+/* Category pills */
+.category-pill {
+  border: 1px solid var(--ink-line);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 2rem;
+  padding: 0.4rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.category-pill.active,
+.category-pill:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+ 
+/* Event cards*/
+.event-card {
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  height: 100%;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.event-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(27, 31, 59, 0.12);
+}
+.event-card .event-img {
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  width: 100%;
+}
+.event-card .card-body {
+  position: relative;
+}
+/* dashed ticket-tear divider between image and details */
+.event-card .tear-divider {
+  border-top: 2px dashed var(--ink-line);
+  position: relative;
+}
+.event-card .tear-divider::before,
+.event-card .tear-divider::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  background: var(--paper);
+  border-radius: 50%;
+}
+.event-card .tear-divider::before { left: -8px; }
+.event-card .tear-divider::after { right: -8px; }
+ 
+.event-date-badge {
+  font-family: var(--font-display);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  text-align: center;
+  line-height: 1.1;
+  min-width: 52px;
+}
+.event-date-badge .month {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+}
+.event-date-badge .day {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+ 
+/* Status badges */
+.status-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.3rem 0.6rem;
+  border-radius: 2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.status-badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-open { background: rgba(47, 111, 78, 0.12); color: var(--green-open); }
+.status-open::before { background: var(--green-open); }
+.status-inactive { background: rgba(122, 117, 102, 0.14); color: var(--grey-inactive); }
+.status-inactive::before { background: var(--grey-inactive); }
+.status-soldout { background: rgba(27, 31, 59, 0.1); color: var(--ink); }
+.status-soldout::before { background: var(--ink); }
+.status-cancelled { background: rgba(166, 64, 47, 0.12); color: var(--red-cancelled); }
+.status-cancelled::before { background: var(--red-cancelled); }
+ 
+/* Booking / ticket stub card (event details page)*/
+.ticket-card {
+  background: #fff;
+  border-radius: 0.6rem;
+  border: 1px solid var(--ink-line);
+  box-shadow: 0 12px 30px rgba(27, 31, 59, 0.08);
+  overflow: visible;
+}
+.ticket-card .ticket-header {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 0.6rem 0.6rem 0 0;
+  padding: 1.1rem 1.25rem;
+}
+.ticket-card .ticket-body {
+  padding: 1.25rem;
+  position: relative;
+}
+/* perforation between header and body, ticket-stub style */
+.ticket-perforation {
+  position: relative;
+  border-top: 2px dashed var(--ink-line);
+}
+.ticket-perforation::before,
+.ticket-perforation::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  width: 20px;
+  height: 20px;
+  background: var(--paper);
+  border-radius: 50%;
+}
+.ticket-perforation::before { left: -10px; }
+.ticket-perforation::after { right: -10px; }
+ 
+.qty-control {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--ink-line);
+  border-radius: 0.4rem;
+  overflow: hidden;
+}
+.qty-control button {
+  background: var(--paper-dim);
+  border: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.qty-control input {
+  border: none;
+  width: 3rem;
+  text-align: center;
+  font-weight: 600;
+}
+.qty-control input:focus { outline: none; box-shadow: none; }
+ 
+/* Comments */
+.comment-item {
+  border-bottom: 1px solid var(--ink-line);
+  padding: 1rem 0;
+}
+.comment-item:last-child { border-bottom: none; }
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-family: var(--font-display);
+  flex-shrink: 0;
+}
+ 
+/* Forms (create/update event) */
+.form-section-label {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  border-bottom: 1px solid var(--ink-line);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--gold-deep);
+  box-shadow: 0 0 0 0.2rem rgba(227, 178, 60, 0.25);
+}
+.image-drop {
+  border: 2px dashed var(--ink-line);
+  border-radius: 0.5rem;
+  padding: 1.75rem 1rem;
+  text-align: center;
+  color: var(--grey-inactive);
+  background: var(--paper-dim);
+}
+ 
+/* Booking history*/
+.booking-row {
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: 0.5rem;
+  padding: 0.9rem;
+}
+.booking-thumb {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 0.4rem;
+  flex-shrink: 0;
+}
+.order-id {
+  font-family: var(--font-display);
+  letter-spacing: 0.03em;
+}
+ 
+/*Footer*/
+footer.site-footer {
+  background: var(--ink);
+  color: rgba(247, 245, 240, 0.7);
+}
+footer.site-footer a {
+  color: rgba(247, 245, 240, 0.85);
+}
+footer.site-footer a:hover { color: var(--gold); }
+ 
+/* Utility */
+.section-eyebrow-free h2 { margin-bottom: 0.25rem; }
+.text-gold { color: var(--gold-deep); }
+.bg-paper-dim { background: var(--paper-dim); }

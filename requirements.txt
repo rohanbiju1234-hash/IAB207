@@ -1,0 +1,12 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-WTF
+Bootstrap-Flask
+email_validator
+werkzeug
+
+# Add ONE of these when you upgrade ai_search.py to real semantic search:
+# sentence-transformers
+# huggingface_hub
+# openai
