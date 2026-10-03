@@ -74,7 +74,7 @@ def event_details(event_id):
             flash('Please log in to do that.', 'warning')
             return redirect(url_for('main.login'))
 
-        if 'submit' in request.form and comment_form.validate_on_submit() and request.form.get('form_name') == 'comment':
+        if request.form.get('form_name') == 'comment' and comment_form.validate_on_submit():
             comment = Comment(body=comment_form.body.data, author=current_user, event=event)
             db.session.add(comment)
             db.session.commit()
