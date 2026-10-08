@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 from . import db
 from .models import User, Event, Booking, Comment
 from .forms import RegisterForm, LoginForm, EventForm, CommentForm, BookingForm, SearchForm
-from .ai_search import rank_events_by_query   # AI-enhanced discovery - see ai_search.py
+from .ai_search import rank_events_by_query, keyword_search   # AI-enhanced discovery - see ai_search.py
 
 main = Blueprint('main', __name__)
 
@@ -38,6 +38,7 @@ def index():
     search_form = SearchForm()
     query = request.args.get('query', '').strip()
     category = request.args.get('category', 'all')
+    mode = request.args.get('mode', 'smart')    # 'smart' or 'keyword'
 
     events = Event.query.order_by(Event.event_date.asc()).all()
     for e in events:
@@ -47,15 +48,16 @@ def index():
         events = [e for e in events if e.category.lower() == category.lower()]
 
     if query:
-        # AI-enhanced discovery: ranks by semantic similarity instead of
-        # exact substring matching alone. See ai_search.py for the approach
-        # and how to swap in sentence-transformers embeddings.
-        events = rank_events_by_query(events, query)
+        if mode == 'keyword':
+            events = keyword_search(events, query)
+        else:
+            events = rank_events_by_query(events, query)
 
     categories = ['All', 'Jazz', 'Rock', 'Hip-Hop', 'EDM', 'R&B']
     return render_template(
         'index.html', events=events, search_form=search_form,
-        query=query, active_category=category, categories=categories
+        query=query, active_category=category, categories=categories,
+        mode=mode
     )
 
 
