@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 from . import db
 from .models import User, Event, Booking, Comment
 from .forms import RegisterForm, LoginForm, EventForm, CommentForm, BookingForm, SearchForm
-from .ai_search import rank_events_by_query   # AI-enhanced discovery - see ai_search.py
+from .ai_search import rank_events_by_query, keyword_search   # AI-enhanced discovery - see ai_search.py
 
 main = Blueprint('main', __name__)
 
@@ -38,6 +38,7 @@ def index():
     search_form = SearchForm()
     query = request.args.get('query', '').strip()
     category = request.args.get('category', 'all')
+    mode = request.args.get('mode', 'smart')    # 'smart' or 'keyword'
 
     events = Event.query.order_by(Event.event_date.asc()).all()
     for e in events:
@@ -47,15 +48,16 @@ def index():
         events = [e for e in events if e.category.lower() == category.lower()]
 
     if query:
-        # AI-enhanced discovery: ranks by semantic similarity instead of
-        # exact substring matching alone. See ai_search.py for the approach
-        # and how to swap in sentence-transformers embeddings.
-        events = rank_events_by_query(events, query)
+        if mode == 'keyword':
+            events = keyword_search(events, query)
+        else:
+            events = rank_events_by_query(events, query)
 
     categories = ['All', 'Jazz', 'Rock', 'Hip-Hop', 'EDM', 'R&B']
     return render_template(
         'index.html', events=events, search_form=search_form,
-        query=query, active_category=category, categories=categories
+        query=query, active_category=category, categories=categories,
+        mode=mode
     )
 
 
@@ -86,8 +88,16 @@ def event_details(event_id):
                 flash('This event is not currently open for booking.', 'danger')
                 return redirect(url_for('main.event_details', event_id=event.id))
 
-            unit_price = float(event.ticket_price) if booking_form.ticket_type.data == 'Standard Admission' else float(event.ticket_price) + 25
             quantity = booking_form.quantity.data
+
+            # reject bookings larger than the remaining capacity so an event can never be oversold
+            tickets_left = event.capacity - event.tickets_sold
+            if quantity > tickets_left:
+                flash(f'Only {tickets_left} ticket{"s" if tickets_left != 1 else ""} left for this event. '
+                      'Please reduce the quantity.', 'danger')
+                return redirect(url_for('main.event_details', event_id=event.id))
+
+            unit_price = float(event.ticket_price) if booking_form.ticket_type.data == 'Standard Admission' else float(event.ticket_price) + 25
             booking = Booking(
                 order_reference=generate_order_reference(),
                 ticket_type=booking_form.ticket_type.data,
@@ -98,8 +108,9 @@ def event_details(event_id):
             )
             db.session.add(booking)
 
-            # naive sold-out check based on capacity
-            if event.tickets_sold + quantity >= event.capacity:
+            # flip to Sold Out when this booking takes the last tickets. tickets_left was worked
+            # out before the booking was attached to the event, so it is not counted twice.
+            if quantity == tickets_left:
                 event.status = Event.STATUS_SOLD_OUT
 
             db.session.commit()

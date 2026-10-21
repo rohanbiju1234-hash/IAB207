@@ -1,69 +1,60 @@
 """
-AI-enhanced event discovery.
-
-The assignment requires *more* than plain keyword matching - e.g. semantic
-search, recommendations, or related-event suggestions (confirmed with your
-tutor which approach you're doing).
-
-This file currently ships a lightweight placeholder (difflib-based fuzzy
-matching over title/description/category/venue/artist) so the app runs with
-zero extra dependencies. Swap this out for real semantic search using
-sentence-transformers before you submit - that's what will actually satisfy
-the "AI-enhanced" requirement; the code below on its own is NOT sufficient.
-
---------------------------------------------------------------------------
-HOW TO UPGRADE TO REAL SEMANTIC SEARCH (sentence-transformers):
-
-    pip install sentence-transformers
-
-    from sentence_transformers import SentenceTransformer, util
-    model = SentenceTransformer('all-MiniLM-L6-v2')  # small, fast, good enough
-
-    # Precompute embeddings for each event's text (title + description + category)
-    # once (e.g. when the event is created, store as a pickled/JSON blob, or just
-    # recompute on the fly for a small dataset - fine for coursework scale).
-
-    def rank_events_by_query(events, query):
-        if not events or not query:
-            return events
-        corpus = [f'{e.title}. {e.description} Category: {e.category}' for e in events]
-        corpus_embeddings = model.encode(corpus, convert_to_tensor=True)
-        query_embedding = model.encode(query, convert_to_tensor=True)
-        scores = util.cos_sim(query_embedding, corpus_embeddings)[0]
-        ranked = sorted(zip(events, scores.tolist()), key=lambda pair: pair[1], reverse=True)
-        return [e for e, score in ranked if score > 0.2]  # drop weak matches
-
-This finds events based on MEANING (e.g. searching "chill night out with live
-music" could surface a jazz event even with zero overlapping keywords),
-rather than requiring an exact substring match.
---------------------------------------------------------------------------
+AI-enhanced event discovery using sentence-transformers.
+Events are embedded once and cached, so each search only embeds the query.
 """
 
-from difflib import SequenceMatcher
+_model = None          # loaded lazily so the app still starts quickly
+_cache = {}            # event.id -> (text that was embedded, embedding)
 
 
-def _similarity(a, b):
-    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+def _get_model():
+    global _model
+    if _model is None:
+        from sentence_transformers import SentenceTransformer
+        _model = SentenceTransformer('all-MiniLM-L6-v2')
+    return _model
 
 
-def rank_events_by_query(events, query):
-    """Placeholder ranking: fuzzy-matches the query against several event
-    fields and returns events sorted by relevance (best first), dropping
-    anything with very low relevance. Replace with real embeddings - see
-    the module docstring above."""
-    if not query:
+def _event_text(event):
+    # everything a user might describe an event by
+    return f'{event.title}. {event.artist or ""}. {event.category}. {event.venue}. {event.description}'
+
+
+def _embedding_for(event):
+    """Return the cached embedding, recomputing only if the event text changed
+    (so edited events are picked up automatically)."""
+    text = _event_text(event)
+    cached = _cache.get(event.id)
+    if cached is None or cached[0] != text:
+        _cache[event.id] = (text, _get_model().encode(text, convert_to_tensor=True))
+    return _cache[event.id][1]
+
+
+def keyword_search(events, query):
+    """Traditional search: the query must appear somewhere in the event text."""
+    q = query.lower()
+    return [e for e in events if q in _event_text(e).lower()]
+
+
+def rank_events_by_query(events, query, threshold=0.3):
+    """Semantic search: rank events by how close their meaning is to the query."""
+    if not query or not events:
         return events
+
+    try:
+        from sentence_transformers import util
+    except ImportError:
+        # sentence-transformers is too heavy for a PythonAnywhere free account,
+        # so the deployed site falls back to keyword search instead of a 500 error.
+        return keyword_search(events, query)
+    query_vec = _get_model().encode(query, convert_to_tensor=True)
 
     scored = []
     for event in events:
-        haystack = ' '.join(filter(None, [
-            event.title, event.description, event.category, event.venue, event.artist
-        ]))
-        score = _similarity(query, haystack)
-        # also boost heavily on a direct substring hit anywhere in the text
-        if query.lower() in haystack.lower():
-            score += 0.5
+        score = util.cos_sim(query_vec, _embedding_for(event)).item()
+        if query.lower() in _event_text(event).lower():
+            score += 0.3   # a direct word match should always rank well
         scored.append((event, score))
 
     scored.sort(key=lambda pair: pair[1], reverse=True)
-    return [event for event, score in scored if score > 0.08]
+    return [event for event, score in scored if score >= threshold]
