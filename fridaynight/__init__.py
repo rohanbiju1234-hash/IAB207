@@ -13,7 +13,7 @@ login_manager = LoginManager()
 def create_app():
     app = Flask(__name__)
 
-    app.config['SECRET_KEY'] = 'change-this-to-something-random-before-deploying'
+    app.config['SECRET_KEY'] = 'a9a9be0f2a314870ef7ce195eb5ac792939212fd3e912c587006f2e381f20487'
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'fridaynight.db')
     app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'static', 'img')

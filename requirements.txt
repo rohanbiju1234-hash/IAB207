@@ -5,8 +5,8 @@ Flask-WTF
 Bootstrap-Flask
 email_validator
 werkzeug
+gunicorn==20.1.0
 
-# Add ONE of these when you upgrade ai_search.py to real semantic search:
+# Optional: real semantic search (fridaynight/ai_search.py). Too heavy for a
+# PythonAnywhere free account, so the app falls back to keyword search without it.
 # sentence-transformers
-# huggingface_hub
-# openai
