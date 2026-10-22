@@ -36,7 +36,7 @@ def keyword_search(events, query):
     return [e for e in events if q in _event_text(e).lower()]
 
 
-def rank_events_by_query(events, query, threshold=0.3):
+def rank_events_by_query(events, query, threshold=0.25):
     """Semantic search: rank events by how close their meaning is to the query."""
     if not query or not events:
         return events
@@ -53,3 +53,18 @@ def rank_events_by_query(events, query, threshold=0.3):
 
     scored.sort(key=lambda pair: pair[1], reverse=True)
     return [event for event, score in scored if score >= threshold]
+
+def related_events(event, all_events, limit=3):
+    """Return the events most similar in meaning to this one (not including itself)."""
+    from sentence_transformers import util
+    target = _embedding_for(event)
+
+    scored = []
+    for other in all_events:
+        if other.id == event.id or other.status == 'Cancelled':
+            continue
+        score = util.cos_sim(target, _embedding_for(other)).item()
+        scored.append((other, score))
+
+    scored.sort(key=lambda pair: pair[1], reverse=True)
+    return [e for e, score in scored[:limit]]

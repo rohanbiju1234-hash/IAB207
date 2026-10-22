@@ -84,39 +84,56 @@
         {% endif %}
 
         <!-- comments -->
-        <section class="mt-5">
+        <section class="mt-5" id="comments">
           <h2 class="h5 mb-3">Comments <span class="text-muted fw-normal">({{ comments|length }})</span></h2>
 
           {% if current_user.is_authenticated %}
-          <form method="post" class="mb-4">
+          <form method="post" action="{{ url_for('main.event_details', event_id=event.id, _anchor='comments') }}" class="mb-4">
             {{ comment_form.hidden_tag() }}
             <input type="hidden" name="form_name" value="comment">
             <div class="row g-2">
               <div class="col-12">
-                {{ comment_form.body(class="form-control", rows="2") }}
-                {% for error in comment_form.body.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                <label for="{{ comment_form.body.id }}" class="form-label small text-muted">
+                  Commenting as {{ current_user.first_name }} {{ current_user.last_name }}
+                </label>
+                {{ comment_form.body(class="form-control" ~ (" is-invalid" if comment_form.body.errors else ""), rows="3", maxlength="1000") }}
+                {% for error in comment_form.body.errors %}
+                  <div class="text-danger small mt-1">
+                    {% if 'required' in error|lower %}Please write something before posting.{% else %}{{ error }}{% endif %}
+                  </div>
+                {% endfor %}
+                <div class="form-text">Up to 1000 characters.</div>
               </div>
               <div class="col-12 text-end">
-                <button class="btn btn-gold mt-2" type="submit">Post</button>
+                <button class="btn btn-gold mt-2" type="submit">Post comment</button>
               </div>
             </div>
           </form>
           {% else %}
-          <p class="text-muted small">
-            <a href="{{ url_for('main.login', next=request.path) }}">Log in</a> to leave a comment.
-          </p>
+          <div class="p-3 mb-4 rounded-3 border bg-light text-center">
+            <p class="mb-2 text-muted">Want to join the conversation?</p>
+            <a href="{{ url_for('main.login', next=request.path) }}" class="btn btn-gold btn-sm">Log in to comment</a>
+            <a href="{{ url_for('main.register') }}" class="btn btn-outline-secondary btn-sm">Register</a>
+          </div>
           {% endif %}
 
           <div id="commentList">
             {% for comment in comments %}
             <div class="comment-item d-flex gap-3 mb-3">
               <div class="comment-avatar">{{ comment.author.first_name[0] }}{{ comment.author.last_name[0] }}</div>
-              <div>
-                <div class="d-flex align-items-center gap-2">
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
                   <strong>{{ comment.author.full_name }}</strong>
-                  <span class="text-muted small">{{ comment.created_at.strftime('%d %b %Y') }}</span>
+                  <span class="text-muted small">{{ (comment.created_at|brisbane).strftime('%d %b %Y, %I:%M %p') }}</span>
+
+                  {% if current_user.is_authenticated and (comment.author.id == current_user.id or event.owner_id == current_user.id) %}
+                  <form method="post" action="{{ url_for('main.delete_comment', comment_id=comment.id) }}" class="ms-auto">
+                    {{ comment_form.hidden_tag() }}
+                    <button type="submit" class="btn btn-outline-danger btn-sm py-0">Delete</button>
+                  </form>
+                  {% endif %}
                 </div>
-                <p class="mb-0 mt-1">{{ comment.body }}</p>
+                <p class="mb-0 mt-1" style="white-space: pre-line;">{{ comment.body }}</p>
               </div>
             </div>
             {% else %}
@@ -166,6 +183,28 @@
         </div>
       </div>
     </div>
+
+    <!-- related events, picked by the AI embeddings -->
+    {% if related %}
+    <section class="mt-5">
+      <h2 class="h5 mb-3">You might also like</h2>
+      <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for item in related %}
+        <div class="col">
+          <a href="{{ url_for('main.event_details', event_id=item.id) }}" class="text-decoration-none">
+            <div class="event-card">
+              <img src="{{ url_for('static', filename='img/' + item.image_filename) if item.image_filename else url_for('static', filename='img/concert.avif') }}" class="event-img" alt="{{ item.title }}">
+              <div class="card-body p-3">
+                <h3 class="h6 mb-1 text-dark">{{ item.title }}</h3>
+                <p class="text-muted small mb-0">{{ item.event_date.strftime('%d %b %Y') }} · {{ item.venue }}</p>
+              </div>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
   </div>
 
 {% endblock %}
