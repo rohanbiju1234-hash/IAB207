@@ -42,6 +42,30 @@ CUSTODIANS = {
 'darwin': 'the Larrakia people',
         }
 
+def get_custodians(form):
+    if form.ack_location.data == 'other':
+        return form.traditional_custodians.data
+    return CUSTODIANS.get(form.ack_location.data)
+
+
+def build_acknowledgement(form):
+    if form.acknowledgement_type.data == 'generic':
+        return('We acknowledge the Traditional Custodians of the land on which this event '
+              'takes place, and pay our respects to their Elders past and present.'  )
+
+
+
+    if form.acknowledgement_type.data == 'enhanced':
+        statement = f'We acknowledge {get_custodians(form)}, the Traditional Custodians of the Land'
+        if form.ack_place.data:
+            statement += f' where we gather - {form.ack_place.data}'
+        statement += ('. We pay our respects to their Elders past and present, '
+                     'and recognise their continuing connection to Country.')
+        if form.ack_reflection.data:
+            statement += ' ' + form.ack_reflection.data
+        return statement
+    return None
+ 
 
 
 
@@ -153,8 +177,8 @@ def create_event():
             ticket_price=form.ticket_price.data,
             status=form.status.data,
             acknowledgement_type=form.acknowledgement_type.data,
-            traditional_custodians=form.traditional_custodians.data,
-            acknowledgement_text=form.acknowledgement_text.data,
+            traditional_custodians=get_custodians(form),
+            acknowledgement_text=build_acknowledgement(form),
             owner=current_user,
         )
         db.session.add(event)
@@ -188,8 +212,8 @@ def edit_event(event_id):
         event.capacity = form.capacity.data
         event.ticket_price = form.ticket_price.data
         event.acknowledgement_type = form.acknowledgement_type.data
-        event.traditional_custodians = form.traditional_custodians.data
-        event.acknowledgement_text = form.acknowledgement_text.data
+        event.traditional_custodians = get_custodians(form)
+        event.acknowledgement_text = build_acknowledgement(form)
         # NOTE: event.status is deliberately NOT updated here - the brief
         # says owners can edit everything except the status.
 
