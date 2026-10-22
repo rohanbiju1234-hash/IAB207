@@ -175,7 +175,7 @@ def create_event():
             end_time=form.end_time.data,
             capacity=form.capacity.data,
             ticket_price=form.ticket_price.data,
-            status=form.status.data,
+            status=Event.STATUS_OPEN,
             acknowledgement_type=form.acknowledgement_type.data,
             traditional_custodians=get_custodians(form),
             acknowledgement_text=build_acknowledgement(form),
