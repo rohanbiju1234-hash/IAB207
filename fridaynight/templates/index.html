@@ -10,6 +10,16 @@
           <p class="lead mb-4">Browse live events happening near you and book your spot in a couple of clicks.</p>
           <form class="hero-search d-flex flex-column flex-sm-row gap-2" role="search" method="get" action="{{ url_for('main.index') }}">
             <input class="form-control border-0 flex-grow-1" type="search" name="query" value="{{ query }}" placeholder="Search events, venues, artists…" aria-label="Search events">
+
+            <!-- search mode: smart (AI meaning-based) or exact keyword match -->
+            <select class="form-select border-0 w-auto" name="mode" aria-label="Search mode">
+              <option value="smart" {% if mode == 'smart' %}selected{% endif %}>Smart search</option>
+              <option value="keyword" {% if mode == 'keyword' %}selected{% endif %}>Exact match</option>
+            </select>
+
+            <!-- keep the selected category when a new search is made -->
+            <input type="hidden" name="category" value="{{ active_category }}">
+
             <button class="btn btn-gold px-4" type="submit">Search</button>
           </form>
         </div>
@@ -24,16 +34,25 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 section-eyebrow-free">
       <div>
         <h2>Upcoming events</h2>
-        {% if query %}<p class="text-muted small mb-0">Showing AI-ranked results for "{{ query }}"</p>{% endif %}
+        {% if query %}
+          <p class="text-muted small mb-0">
+            {% if mode == 'keyword' %}
+              Showing exact matches for "{{ query }}"
+            {% else %}
+              Showing AI-ranked results for "{{ query }}"
+            {% endif %}
+            ({{ events|length }} found)
+          </p>
+        {% endif %}
       </div>
     </div>
 
-    <!-- category filter - real links now, filters via the category query param -->
+    <!-- category filter - links keep the search text and mode -->
     <div class="d-flex flex-wrap gap-2 mb-4" role="group" aria-label="Filter events by category">
       {% for cat in categories %}
         {% set cat_value = 'all' if cat == 'All' else cat %}
-        <a href="{{ url_for('main.index', category=cat_value, query=query) }}"
-           class="category-pill {% if active_category == cat_value or (active_category=='all' and cat=='All') %}active{% endif %}">{{ cat }}</a>
+        <a href="{{ url_for('main.index', category=cat_value, query=query, mode=mode) }}"
+           class="category-pill {% if active_category|lower == cat_value|lower %}active{% endif %}">{{ cat }}</a>
       {% endfor %}
     </div>
 
@@ -63,7 +82,7 @@
       {% endfor %}
     </div>
     {% else %}
-      <p class="text-muted">No events match your search yet. Try a different keyword, or <a href="{{ url_for('main.index') }}">clear your search</a>.</p>
+      <p class="text-muted">No events match your search yet. Try a different keyword, switch to Smart search, or <a href="{{ url_for('main.index') }}">clear your search</a>.</p>
     {% endif %}
   </main>
 
