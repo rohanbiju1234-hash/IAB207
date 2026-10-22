@@ -31,6 +31,23 @@ def refresh_event_status(event):
         db.session.commit()
 
 
+CUSTODIANS = {
+'brisbane': 'the Turrbal and Jagera (Yuggera) peoples',
+'sydney': 'the Gadigal people of the Eora Nation',
+'melbourne': 'the Wurundjeri Woi-wurrung and Bunurong peoples of the Kulin Nation',
+'canberra': 'the Ngunnawal people',
+'adelaide': 'the Kaurna people',
+'perth': 'the Whadjuk people of the Noongar Nation',
+'hobart': 'the muwinina people',
+'darwin': 'the Larrakia people',
+        }
+
+
+
+
+
+
+
 # ---------- landing page / browse + search ----------
 
 @main.route('/')
