@@ -36,7 +36,7 @@ def keyword_search(events, query):
     return [e for e in events if q in _event_text(e).lower()]
 
 
-def rank_events_by_query(events, query, threshold=0.25):
+def rank_events_by_query(events, query, threshold=0.30):
     """Semantic search: rank events by how close their meaning is to the query."""
     if not query or not events:
         return events
