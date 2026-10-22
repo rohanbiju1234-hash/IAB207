@@ -41,6 +41,15 @@
               {{ form.acknowledgement_type(class="form-select") }}
               <div class="form-text">Not sure what this means? <a href="{{ url_for('main.acknowledgement_info') }}" target="_blank">Read our guide</a>.</div>
             </div>
+
+            <div class="col-md-8">
+              {{ form.ack_location.label(class="form-label") }}
+              {{ form.ack_location(class="form-select") }}
+              <div class="form-text">Pick the capital city closest to your event. If it's elsewhere, choose "Other" and use the AIATSIS map to find the Traditional Custodians. </div>
+
+
+
+            </div>
             <div class="col-md-8">
               {{ form.traditional_custodians.label(class="form-label") }}
               {{ form.traditional_custodians(class="form-control", placeholder="e.g. the Turrbal and Yugara peoples") }}

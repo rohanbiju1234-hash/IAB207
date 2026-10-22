@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField, PasswordField, TextAreaField, SelectField,
-    IntegerField, DecimalField, DateField, TimeField, SubmitField
+    IntegerField, DecimalField, DateField, TimeField, SubmitField, BooleanField
 )
 from wtforms.validators import (
     DataRequired, Email, EqualTo, Length, NumberRange, Optional
@@ -67,6 +67,28 @@ class EventForm(FlaskForm):
                  ('enhanced', 'Acknowledgement of Country: enhanced')],
         validators=[DataRequired()]
     )
+
+    ack_location = SelectField(
+        'Where is your event?', 
+    choices=[('', 'Choose a location...'),
+             ('brisbane', 'Brisbane (Meanjin) - Turrbal and Jagera (Yuggera) peoples'),
+             ('sydney', 'Sydney - Gadigal people of the Eora Nation'),
+             ('melbourne', 'Melbourne (Naarm) - Wurundjeri Woi-wurrung and Bunurong peoples of the Kulin Nation'),
+             ('canberra', 'Canberra - Ngunnawal people'),
+             ('adelaide', 'Adelaide (Tarntanya) - Kaurna people'),
+             ('perth', 'Perth (Boorloo) - Whadjuk people of the Noongar Nation'),
+             ('hobart', 'Hobart (nipaluna) - muwinina people'),
+             ('darwin', 'Darwin (Garramilla) - Larrakia people'),
+             ('other', 'Other location (I will enter the custodians myself)')],
+
+    validators=[Optional()]
+    )
+
+
+
+
+    
+
     traditional_custodians = StringField(
         'Traditional Custodians of this land (for the enhanced option)',
         validators=[Optional(), Length(max=200)]
