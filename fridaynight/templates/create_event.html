@@ -53,11 +53,32 @@
             <div class="col-md-8">
               {{ form.traditional_custodians.label(class="form-label") }}
               {{ form.traditional_custodians(class="form-control", placeholder="e.g. the Turrbal and Yugara peoples") }}
+                  <div class ="form-text">Use the <a href="https://aiatsis.gov.au/explore/map-indigenous-australia" target="_blank">AIATSIS map</a> or <a href="https://knowyourcountry.org.au/how-to-know-your-country" target="_blank">Know your Country</a> to check and copy the name exactly as the source spells it.</div> 
+            </div>
+            <div class="col-md-8">
+              {{ form.ack_place.label(class="form-label") }}
+              {{ form.ack_place(class="form-control", placeholder="e.g. a rooftop beside the Brisbane River") }}
+              <div class="form-text">Being specific to the place makes the acknowledgement meaningful rather than a generic script.</div>
+            </div>
+            <div class="col-12">
+              {{ form.ack_reflection.label(class="form-label") }}
+              {{ form.ack_reflection(class="form-control", rows="2", placeholder="e.g. We gather to share music on land where stories and songs have been shared for thousands of years.") }}
+              <div class="form-text">Write on or two sentences in your own words about why this matters to your event.</div>
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                {{ form.ack_checked(class="form-check-input") }}
+                {{ form.ack_checked.label(class="form-check-label") }}
+              </div>
             </div>
             <div class="col-12">
               {{ form.acknowledgement_text.label(class="form-label") }}
               {{ form.acknowledgement_text(class="form-control", rows="3") }}
             </div>
+
+
+    
+
 
             <div class="col-12">
               {{ form.image.label(class="form-label") }}

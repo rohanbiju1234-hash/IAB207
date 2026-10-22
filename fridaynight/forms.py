@@ -84,6 +84,20 @@ class EventForm(FlaskForm):
     validators=[Optional()]
     )
 
+    ack_place = StringField(
+        'Describe the place where your event happens',
+        validators=[Optional(), Length(max=150)]
+    )
+    ack_reflection = TextAreaField(
+        'Why does acknowledging Country matter for this event?',
+        validators=[Optional(), Length(max=500)]
+    )
+    ack_checked = BooleanField(
+        'I have checked the Traditional Custodians using a reliable source'
+    )
+
+
+
 
 
 
