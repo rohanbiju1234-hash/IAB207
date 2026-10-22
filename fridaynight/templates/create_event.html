@@ -127,17 +127,13 @@
               {% for error in form.ticket_price.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
             </div>
             <div class="col-md-6">
-              {{ form.status.label(class="form-label") }}
-              {% if editing %}
-                <input type="text" class="form-control" value="{{ event.status }}" disabled>
-                <div class="form-text">Status can't be edited directly - it updates automatically (e.g. once the event date passes) or via Cancel event.</div>
-                <!-- keep the real field in the form so validation still passes, just hidden -->
-                {{ form.status(style="display:none;") }}
-              {% else %}
-                {{ form.status(class="form-select") }}
-              {% endif %}
+            {{ form.status.label(class="form-label ") }}
+            <input type ="text" class="form-control" value="{{ event.status if editing else 'Open' }}" disabled>
+            <div class ="form-text">New events start as Open. Status then updates automatically (Sold Out when tickets run out. Inactive once the date passes) or by Cancel event. </div>
+            {{ form.status(style="display:none;") }}
+
             </div>
-          </div>
+            </div>
 
           <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end">
             <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
