@@ -1,6 +1,7 @@
 import os
 import random
 import string
+import uuid
 from datetime import datetime, timedelta
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
@@ -8,9 +9,10 @@ from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
 from werkzeug.utils import secure_filename
 
+
 from . import db
 from .models import User, Event, Booking, Comment
-from .forms import RegisterForm, LoginForm, EventForm, CommentForm, BookingForm, SearchForm
+from .forms import RegisterForm, LoginForm, EventForm, CommentForm, BookingForm, SearchForm, CancelEventForm
 from .ai_search import rank_events_by_query, keyword_search, related_events  # AI-enhanced discovery - see ai_search.py
 
 main = Blueprint('main', __name__)
@@ -30,6 +32,45 @@ def refresh_event_status(event):
     if event.status == Event.STATUS_OPEN and event.is_past:
         event.status = Event.STATUS_INACTIVE
         db.session.commit()
+
+
+CUSTODIANS = {
+'brisbane': 'the Turrbal and Jagera (Yuggera) peoples',
+'sydney': 'the Gadigal people of the Eora Nation',
+'melbourne': 'the Wurundjeri Woi-wurrung and Bunurong peoples of the Kulin Nation',
+'canberra': 'the Ngunnawal people',
+'adelaide': 'the Kaurna people',
+'perth': 'the Whadjuk people of the Noongar Nation',
+'hobart': 'the muwinina people',
+'darwin': 'the Larrakia people',
+        }
+
+def get_custodians(form):
+    if form.ack_location.data == 'other':
+        return form.traditional_custodians.data
+    return CUSTODIANS.get(form.ack_location.data)
+
+
+def build_acknowledgement(form):
+    if form.acknowledgement_type.data == 'generic':
+        return('We acknowledge the Traditional Custodians of the land on which this event '
+              'takes place, and pay our respects to their Elders past and present.'  )
+
+
+
+    if form.acknowledgement_type.data == 'enhanced':
+        statement = f'We acknowledge {get_custodians(form)}, the Traditional Custodians of the Land'
+        if form.ack_place.data:
+            statement += f' where we gather - {form.ack_place.data}'
+        statement += ('. We pay our respects to their Elders past and present, '
+                     'and recognise their continuing connection to Country.')
+        if form.ack_reflection.data:
+            statement += ' ' + form.ack_reflection.data
+        return statement
+    return None
+ 
+
+
 
 
 @main.app_template_filter('brisbane')
@@ -166,10 +207,10 @@ def create_event():
             end_time=form.end_time.data,
             capacity=form.capacity.data,
             ticket_price=form.ticket_price.data,
-            status=form.status.data,
+            status=Event.STATUS_OPEN,
             acknowledgement_type=form.acknowledgement_type.data,
-            traditional_custodians=form.traditional_custodians.data,
-            acknowledgement_text=form.acknowledgement_text.data,
+            traditional_custodians=get_custodians(form),
+            acknowledgement_text=build_acknowledgement(form),
             owner=current_user,
         )
         db.session.add(event)
@@ -187,11 +228,24 @@ def edit_event(event_id):
     if event.owner_id != current_user.id:
         abort(403)
 
+
+
     form = EventForm(obj=event)
     if request.method == 'GET':
-        form.status.data = event.status  # shown but disabled - see template note
+        form.status.data = event.status 
+
+        for key, name in CUSTODIANS.items():
+            if name == event.traditional_custodians:
+                form.ack_location.data = key
+
+     # shown but disabled - see template note
 
     if form.validate_on_submit():
+        if form.capacity.data < event.tickets_sold:
+            form.capacity.errors.append(f"Capacity can't be lower than the {event.tickets_sold} tickets already sold.")
+            return render_template('create_event.html', form=form, editing=True, event=event)
+
+
         event.title = form.title.data
         event.artist = form.artist.data
         event.category = form.category.data
@@ -203,10 +257,12 @@ def edit_event(event_id):
         event.capacity = form.capacity.data
         event.ticket_price = form.ticket_price.data
         event.acknowledgement_type = form.acknowledgement_type.data
-        event.traditional_custodians = form.traditional_custodians.data
-        event.acknowledgement_text = form.acknowledgement_text.data
+        event.traditional_custodians = get_custodians(form)
+        event.acknowledgement_text = build_acknowledgement(form)
         # NOTE: event.status is deliberately NOT updated here - the brief
         # says owners can edit everything except the status.
+        if event.status == Event.STATUS_SOLD_OUT and event.capacity > event.tickets_sold: 
+            event.status = Event.STATUS_OPEN 
 
         new_image = save_event_image(form.image.data)
         if new_image:
@@ -219,16 +275,28 @@ def edit_event(event_id):
     return render_template('create_event.html', form=form, editing=True, event=event)
 
 
-@main.route('/event/<int:event_id>/cancel', methods=['POST'])
+@main.route('/event/<int:event_id>/cancel', methods=['GET', 'POST'])
 @login_required
 def cancel_event(event_id):
     event = Event.query.get_or_404(event_id)
     if event.owner_id != current_user.id:
         abort(403)
-    event.status = Event.STATUS_CANCELLED
-    db.session.commit()
-    flash('Event cancelled.', 'info')
-    return redirect(url_for('main.event_details', event_id=event.id))
+
+
+
+    form = CancelEventForm()
+    if form.validate_on_submit():
+        event.status = Event.STATUS_CANCELLED
+        db.session.commit()
+        flash('Event cancelled.', 'info')
+        return redirect(url_for('main.event_details', event_id=event.id))
+    
+
+    return render_template('cancel_event.html', event=event, form=form)
+
+
+
+   
 
 
 @main.route('/my-events')
@@ -243,10 +311,10 @@ def save_event_image(file_storage):
         return None
     from flask import current_app
     filename = secure_filename(file_storage.filename)
-    path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+    unique_name = f'{uuid.uuid4().hex[:8]}_{filename}'
+    path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_name)
     file_storage.save(path)
-    return filename
-
+    return unique_name
 
 # ---------- booking history ----------
 

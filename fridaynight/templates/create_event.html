@@ -41,14 +41,42 @@
               {{ form.acknowledgement_type(class="form-select") }}
               <div class="form-text">Not sure what this means? <a href="{{ url_for('main.acknowledgement_info') }}" target="_blank">Read our guide</a>.</div>
             </div>
+
+            <div class="col-md-8">
+              {{ form.ack_location.label(class="form-label") }}
+              {{ form.ack_location(class="form-select") }}
+              {% for error in form.ack_location.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+              <div class="form-text">Pick the capital city closest to your event. If it's elsewhere, choose "Other" and use the AIATSIS map to find the Traditional Custodians. </div>
+
+
+
+            </div>
             <div class="col-md-8">
               {{ form.traditional_custodians.label(class="form-label") }}
               {{ form.traditional_custodians(class="form-control", placeholder="e.g. the Turrbal and Yugara peoples") }}
+                  <div class ="form-text">Use the <a href="https://aiatsis.gov.au/explore/map-indigenous-australia" target="_blank">AIATSIS map</a> or <a href="https://knowyourcountry.org.au/how-to-know-your-country" target="_blank">Know your Country</a> to check and copy the name exactly as the source spells it.</div> 
+            </div>
+            <div class="col-md-8">
+              {{ form.ack_place.label(class="form-label") }}
+              {{ form.ack_place(class="form-control", placeholder="e.g. a rooftop beside the Brisbane River") }}
+              <div class="form-text">Being specific to the place makes the acknowledgement meaningful rather than a generic script.</div>
             </div>
             <div class="col-12">
-              {{ form.acknowledgement_text.label(class="form-label") }}
-              {{ form.acknowledgement_text(class="form-control", rows="3") }}
+              {{ form.ack_reflection.label(class="form-label") }}
+              {{ form.ack_reflection(class="form-control", rows="2", placeholder="e.g. We gather to share music on land where stories and songs have been shared for thousands of years.") }}
+              <div class="form-text">Write one or two sentences in your own words about why this matters to your event.</div>
+              {% if editing and event.acknowledgement_text %}
+              <div class="form-text"><strong>Current statement:</strong> {{ event.acknowledgement_text }}<br>Fill in the prompts again to update it.</div>
+              {% endif %}
             </div>
+            <div class="col-12">
+              <div class="form-check">
+                {{ form.ack_checked(class="form-check-input") }}
+                {{ form.ack_checked.label(class="form-check-label") }}
+                {% for error in form.ack_checked.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+              </div>
+            </div>
+           
 
             <div class="col-12">
               {{ form.image.label(class="form-label") }}
@@ -100,17 +128,13 @@
               {% for error in form.ticket_price.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
             </div>
             <div class="col-md-6">
-              {{ form.status.label(class="form-label") }}
-              {% if editing %}
-                <input type="text" class="form-control" value="{{ event.status }}" disabled>
-                <div class="form-text">Status can't be edited directly - it updates automatically (e.g. once the event date passes) or via Cancel event.</div>
-                <!-- keep the real field in the form so validation still passes, just hidden -->
-                {{ form.status(style="display:none;") }}
-              {% else %}
-                {{ form.status(class="form-select") }}
-              {% endif %}
+            {{ form.status.label(class="form-label ") }}
+            <input type ="text" class="form-control" value="{{ event.status if editing else 'Open' }}" disabled>
+            <div class ="form-text">New events start as Open. Status then updates automatically (Sold Out when tickets run out. Inactive once the date passes) or by Cancel event. </div>
+            {{ form.status(style="display:none;") }}
+
             </div>
-          </div>
+            </div>
 
           <div class="d-flex flex-column flex-sm-row gap-2 justify-content-end">
             <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>

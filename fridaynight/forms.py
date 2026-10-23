@@ -1,11 +1,12 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
+from datetime import date
+from flask_wtf.file import FileField, FileAllowed, FileSize
 from wtforms import (
     StringField, PasswordField, TextAreaField, SelectField,
-    IntegerField, DecimalField, DateField, TimeField, SubmitField
+    IntegerField, DecimalField, DateField, TimeField, SubmitField, BooleanField
 )
 from wtforms.validators import (
-    DataRequired, Email, EqualTo, Length, NumberRange, Optional
+    DataRequired, Email, EqualTo, Length, NumberRange, Optional, ValidationError
 )
 
 
@@ -40,7 +41,9 @@ class EventForm(FlaskForm):
     )
     description = TextAreaField('Description', validators=[DataRequired()])
     image = FileField('Event image', validators=[
-        Optional(), FileAllowed(['jpg', 'jpeg', 'png', 'webp', 'avif'], 'Images only!')
+        Optional(), 
+        FileAllowed(['jpg', 'jpeg', 'png', 'webp', 'avif'], 'Images only!'),
+        FileSize(max_size=5 * 1024 * 1024, message = 'Image must be smaller than 5mb.')
     ])
 
     event_date = DateField('Event date', validators=[DataRequired()])
@@ -67,6 +70,42 @@ class EventForm(FlaskForm):
                  ('enhanced', 'Acknowledgement of Country: enhanced')],
         validators=[DataRequired()]
     )
+
+    ack_location = SelectField(
+        'Where is your event?', 
+    choices=[('', 'Choose a location...'),
+             ('brisbane', 'Brisbane (Meanjin) - Turrbal and Jagera (Yuggera) peoples'),
+             ('sydney', 'Sydney - Gadigal people of the Eora Nation'),
+             ('melbourne', 'Melbourne (Naarm) - Wurundjeri Woi-wurrung and Bunurong peoples of the Kulin Nation'),
+             ('canberra', 'Canberra - Ngunnawal people'),
+             ('adelaide', 'Adelaide (Tarntanya) - Kaurna people'),
+             ('perth', 'Perth (Boorloo) - Whadjuk people of the Noongar Nation'),
+             ('hobart', 'Hobart (nipaluna) - muwinina people'),
+             ('darwin', 'Darwin (Garramilla) - Larrakia people'),
+             ('other', 'Other location (I will enter the custodians myself)')],
+
+    validators=[]
+    )
+
+    ack_place = StringField(
+        'Describe the place where your event happens',
+        validators=[Optional(), Length(max=150)]
+    )
+    ack_reflection = TextAreaField(
+        'Why does acknowledging Country matter for this event?',
+        validators=[Optional(), Length(max=500)]
+    )
+    ack_checked = BooleanField(
+        'I have checked the Traditional Custodians using a reliable source'
+    )
+
+
+
+
+
+
+    
+
     traditional_custodians = StringField(
         'Traditional Custodians of this land (for the enhanced option)',
         validators=[Optional(), Length(max=200)]
@@ -75,7 +114,25 @@ class EventForm(FlaskForm):
         'Your Acknowledgement of Country statement (for the enhanced option)',
         validators=[Optional()]
     )
+    def validate_ack_location(self, field):
+        if self.acknowledgement_type.data == 'enhanced':
+          if not field.data:
+            raise ValidationError('Please choose where your event is for the enhanced Acknowledgement of Country.')
+          if field.data == 'other' and not self.traditional_custodians.data:
+            raise ValidationError('Please enter the Traditional Custodians for your location.')
+    
+    def validate_event_date(self,field):
+         
+        if field.data and field.data < date.today():
+            raise ValidationError('The event date must be either today or in the future.')
+    
+    
+    def validate_ack_checked(self, field):
 
+        if self.acknowledgement_type.data == 'enhanced' and not field.data:
+            raise ValidationError('Please confirm you have checked the Traditional Custodians using a reliable source.')
+            
+    
     submit = SubmitField('Publish event')
 
 
@@ -101,3 +158,9 @@ class SearchForm(FlaskForm):
     # GET form, used on the landing page - keyword + optional AI-enhanced toggle
     query = StringField('Search events, venues, artists…', validators=[Optional()])
     submit = SubmitField('Search')
+
+
+class CancelEventForm(FlaskForm):
+
+    submit = SubmitField('Yes, cancel event')
+
