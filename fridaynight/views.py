@@ -1,6 +1,7 @@
 import os
 import random
 import string
+import uuid
 from datetime import datetime
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
@@ -273,6 +274,7 @@ def save_event_image(file_storage):
         return None
     from flask import current_app
     filename = secure_filename(file_storage.filename)
+    unique_name = f'{uuid.uuid4().hex[:8]}_{filename}'
     path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     file_storage.save(path)
     return filename

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileField, FileAllowed, FileSize
 from wtforms import (
     StringField, PasswordField, TextAreaField, SelectField,
     IntegerField, DecimalField, DateField, TimeField, SubmitField, BooleanField
@@ -40,7 +40,9 @@ class EventForm(FlaskForm):
     )
     description = TextAreaField('Description', validators=[DataRequired()])
     image = FileField('Event image', validators=[
-        Optional(), FileAllowed(['jpg', 'jpeg', 'png', 'webp', 'avif'], 'Images only!')
+        Optional(), 
+        FileAllowed(['jpg', 'jpeg', 'png', 'webp', 'avif'], 'Images only!'),
+        FileSize(max_size=5 * 1024 * 1024, message = 'Image must be smaller than 5mb.')
     ])
 
     event_date = DateField('Event date', validators=[DataRequired()])
