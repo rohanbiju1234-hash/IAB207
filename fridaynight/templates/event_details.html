@@ -76,9 +76,7 @@
         <div class="d-flex gap-2 mb-4">
           <a href="{{ url_for('main.edit_event', event_id=event.id) }}" class="btn btn-outline-secondary btn-sm">Edit event</a>
           {% if event.status != 'Cancelled' %}
-          <form method="post" action="{{ url_for('main.cancel_event', event_id=event.id) }}" onsubmit="return confirm('Cancel this event?');">
-            <button type="submit" class="btn btn-outline-danger btn-sm">Cancel event</button>
-          </form>
+         <a href="{{ url_for ('main.cancel_event', event_id=event.id) }}" class="btn btn-outline-danger btn-sm">Cancel event</a>
           {% endif %}
         </div>
         {% endif %}

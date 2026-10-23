@@ -7,9 +7,10 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 
+
 from . import db
 from .models import User, Event, Booking, Comment
-from .forms import RegisterForm, LoginForm, EventForm, CommentForm, BookingForm, SearchForm
+from .forms import RegisterForm, LoginForm, EventForm, CommentForm, BookingForm, SearchForm, CancelEventForm
 from .ai_search import rank_events_by_query   # AI-enhanced discovery - see ai_search.py
 
 main = Blueprint('main', __name__)
@@ -196,9 +197,17 @@ def edit_event(event_id):
     if event.owner_id != current_user.id:
         abort(403)
 
+
+
     form = EventForm(obj=event)
     if request.method == 'GET':
-        form.status.data = event.status  # shown but disabled - see template note
+        form.status.data = event.status 
+
+        for key, name in CUSTODIANS.items():
+            if name == event.traditional_custodians:
+                form.ack_location.data = key
+
+     # shown but disabled - see template note
 
     if form.validate_on_submit():
         event.title = form.title.data
@@ -228,16 +237,28 @@ def edit_event(event_id):
     return render_template('create_event.html', form=form, editing=True, event=event)
 
 
-@main.route('/event/<int:event_id>/cancel', methods=['POST'])
+@main.route('/event/<int:event_id>/cancel', methods=['GET', 'POST'])
 @login_required
 def cancel_event(event_id):
     event = Event.query.get_or_404(event_id)
     if event.owner_id != current_user.id:
         abort(403)
-    event.status = Event.STATUS_CANCELLED
-    db.session.commit()
-    flash('Event cancelled.', 'info')
-    return redirect(url_for('main.event_details', event_id=event.id))
+
+
+
+    form = CancelEventForm()
+    if form.validate_on_submit():
+        event.status = Event.STATUS_CANCELLED
+        db.session.commit()
+        flash('Event cancelled.', 'info')
+        return redirect(url_for('main.event_details', event_id=event.id))
+    
+
+    return render_template('cancel_event.html', event=event, form=form)
+
+
+
+   
 
 
 @main.route('/my-events')

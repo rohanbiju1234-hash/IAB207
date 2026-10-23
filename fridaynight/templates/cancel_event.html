@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class ="container py-5">
+    <h1 class="h3">Cancel "{{event.title}}"?</h1>
+    <p class="text-muted">This event will be marked as cancelled and no more bookings can be made.</p>
+
+    <form method="post">
+        {{ form.hidden_tag() }}
+        <a href="{{ url_for('main.event_details', event_id=event.id) }}" class="btn btn-outline-secondary">No, keep it</a>
+        {{ form.submit(class="btn btn-danger") }}
+        </form>
+</div>
+{% endblock %}

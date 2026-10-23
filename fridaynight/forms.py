@@ -5,7 +5,7 @@ from wtforms import (
     IntegerField, DecimalField, DateField, TimeField, SubmitField, BooleanField
 )
 from wtforms.validators import (
-    DataRequired, Email, EqualTo, Length, NumberRange, Optional
+    DataRequired, Email, EqualTo, Length, NumberRange, Optional, ValidationError
 )
 
 
@@ -81,7 +81,7 @@ class EventForm(FlaskForm):
              ('darwin', 'Darwin (Garramilla) - Larrakia people'),
              ('other', 'Other location (I will enter the custodians myself)')],
 
-    validators=[Optional()]
+    validators=[]
     )
 
     ack_place = StringField(
@@ -111,7 +111,12 @@ class EventForm(FlaskForm):
         'Your Acknowledgement of Country statement (for the enhanced option)',
         validators=[Optional()]
     )
-
+    def validate_ack_location(self, field):
+        if self.acknowledgement_type.data == 'enhanced':
+          if not field.data:
+            raise ValidationError('Please choose where your event is for the enhanced Acknowledgement of Country.')
+          if field.data == 'other' and not self.traditional_custodians.data:
+            raise ValidationError('Please enter the Traditional Custodians for your location.')
     submit = SubmitField('Publish event')
 
 
@@ -137,3 +142,9 @@ class SearchForm(FlaskForm):
     # GET form, used on the landing page - keyword + optional AI-enhanced toggle
     query = StringField('Search events, venues, artists…', validators=[Optional()])
     submit = SubmitField('Search')
+
+
+class CancelEventForm(FlaskForm):
+
+    submit = SubmitField('Yes, cancel event')
+

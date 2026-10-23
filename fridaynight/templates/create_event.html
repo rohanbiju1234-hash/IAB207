@@ -45,6 +45,7 @@
             <div class="col-md-8">
               {{ form.ack_location.label(class="form-label") }}
               {{ form.ack_location(class="form-select") }}
+              {% for error in form.ack_location.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
               <div class="form-text">Pick the capital city closest to your event. If it's elsewhere, choose "Other" and use the AIATSIS map to find the Traditional Custodians. </div>
 
 
