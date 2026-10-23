@@ -66,7 +66,7 @@
             <p class="mb-1">{{ event.acknowledgement_text }}</p>
             {% if event.traditional_custodians %}<p class="text-muted small mb-0">Traditional Custodians: {{ event.traditional_custodians }}</p>{% endif %}
           {% else %}
-            <p class="mb-0 text-muted">We acknowledge the Traditional Custodians of the land on which this event takes place, and pay respect to Elders past, present and emerging.</p>
+            <p class="mb-0 text-muted">We acknowledge the Traditional Custodians of the land on which this event takes place, and pay respect to Elders past and present</p>
           {% endif %}
           <a href="{{ url_for('main.acknowledgement_info') }}" class="small">Learn what this means &raquo;</a>
         </div>
