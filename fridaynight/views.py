@@ -211,6 +211,11 @@ def edit_event(event_id):
      # shown but disabled - see template note
 
     if form.validate_on_submit():
+        if form.capacity.data < event.tickets_sold:
+            form.capacity.errors.append(f"Capacity can't be lower than the {event.tickets_sold} tickets already sold.")
+            return render_template('create_event.html', form=form, editing=True, event=event)
+
+
         event.title = form.title.data
         event.artist = form.artist.data
         event.category = form.category.data
@@ -226,6 +231,8 @@ def edit_event(event_id):
         event.acknowledgement_text = build_acknowledgement(form)
         # NOTE: event.status is deliberately NOT updated here - the brief
         # says owners can edit everything except the status.
+        if event.status == Event.STATUS_SOLD_OUT and event.capacity > event.tickets_sold: 
+            event.status = Event.STATUS_OPEN 
 
         new_image = save_event_image(form.image.data)
         if new_image:
@@ -275,10 +282,9 @@ def save_event_image(file_storage):
     from flask import current_app
     filename = secure_filename(file_storage.filename)
     unique_name = f'{uuid.uuid4().hex[:8]}_{filename}'
-    path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+    path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_name)
     file_storage.save(path)
-    return filename
-
+    return unique_name
 
 # ---------- booking history ----------
 
