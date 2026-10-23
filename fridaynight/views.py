@@ -2,17 +2,18 @@ import os
 import random
 import string
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_user, logout_user, login_required, current_user
+from flask_wtf import FlaskForm
 from werkzeug.utils import secure_filename
 
 
 from . import db
 from .models import User, Event, Booking, Comment
 from .forms import RegisterForm, LoginForm, EventForm, CommentForm, BookingForm, SearchForm, CancelEventForm
-from .ai_search import rank_events_by_query   # AI-enhanced discovery - see ai_search.py
+from .ai_search import rank_events_by_query, keyword_search, related_events  # AI-enhanced discovery - see ai_search.py
 
 main = Blueprint('main', __name__)
 
@@ -72,6 +73,10 @@ def build_acknowledgement(form):
 
 
 
+@main.app_template_filter('brisbane')
+def brisbane_time(value):
+    # comments are saved in UTC, Brisbane is UTC+10 (no daylight saving)
+    return value + timedelta(hours=10)
 
 
 # ---------- landing page / browse + search ----------
@@ -81,6 +86,7 @@ def index():
     search_form = SearchForm()
     query = request.args.get('query', '').strip()
     category = request.args.get('category', 'all')
+    mode = request.args.get('mode', 'smart')    # 'smart' or 'keyword'
 
     events = Event.query.order_by(Event.event_date.asc()).all()
     for e in events:
@@ -90,15 +96,16 @@ def index():
         events = [e for e in events if e.category.lower() == category.lower()]
 
     if query:
-        # AI-enhanced discovery: ranks by semantic similarity instead of
-        # exact substring matching alone. See ai_search.py for the approach
-        # and how to swap in sentence-transformers embeddings.
-        events = rank_events_by_query(events, query)
+        if mode == 'keyword':
+            events = keyword_search(events, query)
+        else:
+            events = rank_events_by_query(events, query)
 
     categories = ['All', 'Jazz', 'Rock', 'Hip-Hop', 'EDM', 'R&B']
     return render_template(
         'index.html', events=events, search_form=search_form,
-        query=query, active_category=category, categories=categories
+        query=query, active_category=category, categories=categories,
+        mode=mode
     )
 
 
@@ -117,12 +124,16 @@ def event_details(event_id):
             flash('Please log in to do that.', 'warning')
             return redirect(url_for('main.login'))
 
-        if request.form.get('form_name') == 'comment' and comment_form.validate_on_submit():
-            comment = Comment(body=comment_form.body.data, author=current_user, event=event)
-            db.session.add(comment)
-            db.session.commit()
-            flash('Comment posted.', 'success')
-            return redirect(url_for('main.event_details', event_id=event.id))
+        if request.form.get('form_name') == 'comment':
+            if comment_form.validate_on_submit():
+                comment = Comment(body=comment_form.body.data.strip(), author=current_user, event=event)
+                db.session.add(comment)
+                db.session.commit()
+                flash('Comment posted.', 'success')
+                # jump straight back to the comments section
+                return redirect(url_for('main.event_details', event_id=event.id, _anchor='comments'))
+            # validation failed - fall through and re-show the page with the errors
+            flash('Your comment could not be posted. Please check the message under the box.', 'danger')
 
         if request.form.get('form_name') == 'booking' and booking_form.validate_on_submit():
             if event.status != Event.STATUS_OPEN:
@@ -150,10 +161,29 @@ def event_details(event_id):
             return redirect(url_for('main.event_details', event_id=event.id))
 
     comments = Comment.query.filter_by(event_id=event.id).order_by(Comment.created_at.desc()).all()
+    related = related_events(event, Event.query.all())
     return render_template(
         'event_details.html', event=event, comment_form=comment_form,
-        booking_form=booking_form, comments=comments
+        booking_form=booking_form, comments=comments, related=related
     )
+
+
+@main.route('/comment/<int:comment_id>/delete', methods=['POST'])
+@login_required
+def delete_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    event_id = comment.event.id
+
+    # the commenter, or the owner of the event, can remove a comment
+    if comment.author.id != current_user.id and comment.event.owner_id != current_user.id:
+        abort(403)
+
+    # the empty form checks the CSRF token
+    if FlaskForm().validate_on_submit():
+        db.session.delete(comment)
+        db.session.commit()
+        flash('Comment deleted.', 'info')
+    return redirect(url_for('main.event_details', event_id=event_id, _anchor='comments'))
 
 
 # ---------- create / edit / cancel event ----------

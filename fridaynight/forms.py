@@ -36,7 +36,7 @@ class EventForm(FlaskForm):
     category = SelectField(
         'Category',
         choices=[('Jazz', 'Jazz'), ('Rock', 'Rock'), ('Hip-Hop', 'Hip-Hop'),
-                 ('EDM', 'EDM'), ('R&B', 'R&B'), ('Other', 'Other')],
+                 ('EDM', 'EDM'), ('R&B', 'R&B'),],
         validators=[DataRequired()]
     )
     description = TextAreaField('Description', validators=[DataRequired()])
