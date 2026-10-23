@@ -13,7 +13,13 @@ login_manager = LoginManager()
 def create_app():
     app = Flask(__name__)
 
-    app.config['SECRET_KEY'] = 'change-this-to-something-random-before-deploying'
+    # The secret key signs session cookies, so it must be hard to guess.
+    # On the deployed site, set a SECRET_KEY environment variable (the repo is
+    # public, so the fallback below is only suitable for running locally).
+    app.config['SECRET_KEY'] = os.environ.get(
+        'SECRET_KEY',
+        '8e6268b12ec7e8e6979d37e6e0254b6e6c12166362a28b56de01b4aa107fea7f'
+    )
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'fridaynight.db')
     app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'static', 'img')
