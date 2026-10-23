@@ -3,6 +3,7 @@ import random
 import string
 import uuid
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_user, logout_user, login_required, current_user
@@ -19,6 +20,19 @@ main = Blueprint('main', __name__)
 
 
 # ---------- helpers ----------
+
+def is_safe_next_url(target):
+    """Only allow the post-login redirect to go to a path on this same site.
+    Without this check, a crafted link such as /login?next=https://evil.example
+    would send a freshly logged-in user to another website (an open redirect)."""
+    if not target:
+        return False
+    # must be a relative path like /bookings, not //host or /\host
+    if not target.startswith('/') or target.startswith('//') or target.startswith('/\\'):
+        return False
+    parts = urlparse(target)
+    return not parts.scheme and not parts.netloc
+
 
 def generate_order_reference():
     stamp = datetime.utcnow().strftime('%Y%m%d')
@@ -365,8 +379,11 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user)
             flash(f'Welcome back, {user.first_name}!', 'success')
+            # only follow ?next= if it points back into this site
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('main.index'))
+            if not is_safe_next_url(next_page):
+                next_page = url_for('main.index')
+            return redirect(next_page)
         flash('Incorrect email or password.', 'danger')
 
     return render_template('login.html', form=form)
