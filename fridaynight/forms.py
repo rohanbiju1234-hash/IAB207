@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from datetime import date
 from flask_wtf.file import FileField, FileAllowed, FileSize
 from wtforms import (
     StringField, PasswordField, TextAreaField, SelectField,
@@ -119,6 +120,19 @@ class EventForm(FlaskForm):
             raise ValidationError('Please choose where your event is for the enhanced Acknowledgement of Country.')
           if field.data == 'other' and not self.traditional_custodians.data:
             raise ValidationError('Please enter the Traditional Custodians for your location.')
+    
+    def validate_event_date(self,field):
+         
+        if field.data and field.data < date.today():
+            raise ValidationError('The event date must be either today or in the future.')
+    
+    
+    def validate_ack_checked(self, field):
+
+        if self.acknowledgement_type.data == 'enhanced' and not field.data:
+            raise ValidationError('Please confirm you have checked the Traditional Custodians using a reliable source.')
+            
+    
     submit = SubmitField('Publish event')
 
 

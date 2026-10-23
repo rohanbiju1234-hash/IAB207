@@ -65,18 +65,18 @@
               {{ form.ack_reflection.label(class="form-label") }}
               {{ form.ack_reflection(class="form-control", rows="2", placeholder="e.g. We gather to share music on land where stories and songs have been shared for thousands of years.") }}
               <div class="form-text">Write one or two sentences in your own words about why this matters to your event.</div>
+              {% if editing and event.acknowledgement_text %}
+              <div class="form-text"><strong>Current statement:</strong> {{ event.acknowledgement_text }}<br>Fill in the prompts again to update it.</div>
+              {% endif %}
             </div>
             <div class="col-12">
               <div class="form-check">
                 {{ form.ack_checked(class="form-check-input") }}
                 {{ form.ack_checked.label(class="form-check-label") }}
+                {% for error in form.ack_checked.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
               </div>
             </div>
            
-
-
-    
-
 
             <div class="col-12">
               {{ form.image.label(class="form-label") }}
