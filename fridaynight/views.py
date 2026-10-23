@@ -154,8 +154,16 @@ def event_details(event_id):
                 flash('This event is not currently open for booking.', 'danger')
                 return redirect(url_for('main.event_details', event_id=event.id))
 
-            unit_price = float(event.ticket_price) if booking_form.ticket_type.data == 'Standard Admission' else float(event.ticket_price) + 25
             quantity = booking_form.quantity.data
+
+            # reject bookings larger than the remaining capacity so an event can never be oversold
+            tickets_left = event.capacity - event.tickets_sold
+            if quantity > tickets_left:
+                flash(f'Only {tickets_left} ticket{"s" if tickets_left != 1 else ""} left for this event. '
+                      'Please reduce the quantity.', 'danger')
+                return redirect(url_for('main.event_details', event_id=event.id))
+
+            unit_price = float(event.ticket_price) if booking_form.ticket_type.data == 'Standard Admission' else float(event.ticket_price) + 25
             booking = Booking(
                 order_reference=generate_order_reference(),
                 ticket_type=booking_form.ticket_type.data,
@@ -166,8 +174,9 @@ def event_details(event_id):
             )
             db.session.add(booking)
 
-            # naive sold-out check based on capacity
-            if event.tickets_sold + quantity >= event.capacity:
+            # flip to Sold Out when this booking takes the last tickets (tickets_left was
+            # worked out before the booking was attached, so it is not double counted)
+            if quantity == tickets_left:
                 event.status = Event.STATUS_SOLD_OUT
 
             db.session.commit()

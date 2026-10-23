@@ -5,4 +5,8 @@ Flask-WTF
 Bootstrap-Flask
 email_validator
 werkzeug
-sentence-transformers
+gunicorn==20.1.0
+
+# Optional: real semantic search (fridaynight/ai_search.py). Too heavy for a
+# PythonAnywhere free account, so the app falls back to keyword search without it.
+# sentence-transformers

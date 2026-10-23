@@ -41,7 +41,11 @@ def rank_events_by_query(events, query, threshold=0.30):
     if not query or not events:
         return events
 
-    from sentence_transformers import util
+    try:
+        from sentence_transformers import util
+    except ImportError:
+        # not installed (e.g. PythonAnywhere free tier): fall back to keyword search
+        return keyword_search(events, query)
     query_vec = _get_model().encode(query, convert_to_tensor=True)
 
     scored = []
@@ -56,7 +60,12 @@ def rank_events_by_query(events, query, threshold=0.30):
 
 def related_events(event, all_events, limit=3):
     """Return the events most similar in meaning to this one (not including itself)."""
-    from sentence_transformers import util
+    try:
+        from sentence_transformers import util
+    except ImportError:
+        # not installed: pick same-category events instead
+        same = [e for e in all_events if e.id != event.id and e.status != 'Cancelled' and e.category == event.category]
+        return same[:limit]
     target = _embedding_for(event)
 
     scored = []
