@@ -47,7 +47,7 @@ def refresh_event_status(event):
         event.status = Event.STATUS_INACTIVE
         db.session.commit()
 
-
+#I am adding the traditional custodians for each capital city
 CUSTODIANS = {
 'brisbane': 'the Turrbal and Jagera (Yuggera) peoples',
 'sydney': 'the Gadigal people of the Eora Nation',
@@ -58,13 +58,13 @@ CUSTODIANS = {
 'hobart': 'the muwinina people',
 'darwin': 'the Larrakia people',
         }
-
+# It retruns the custodians for the chosen city and what the user typed if they picked the Other option
 def get_custodians(form):
     if form.ack_location.data == 'other':
         return form.traditional_custodians.data
     return CUSTODIANS.get(form.ack_location.data)
 
-
+#It builds the acknowledgement statement from the persons answers
 def build_acknowledgement(form):
     if form.acknowledgement_type.data == 'generic':
         return('We acknowledge the Traditional Custodians of the land on which this event '
@@ -263,6 +263,7 @@ def edit_event(event_id):
 
      # shown but disabled - see template note
 
+     # it doesn't allow capacity lower than the tickets
     if form.validate_on_submit():
         if form.capacity.data < event.tickets_sold:
             form.capacity.errors.append(f"Capacity can't be lower than the {event.tickets_sold} tickets already sold.")
@@ -284,6 +285,7 @@ def edit_event(event_id):
         event.acknowledgement_text = build_acknowledgement(form)
         # NOTE: event.status is deliberately NOT updated here - the brief
         # says owners can edit everything except the status.
+        #If the capacity was increased, the sold out event will open for bookings again 
         if event.status == Event.STATUS_SOLD_OUT and event.capacity > event.tickets_sold: 
             event.status = Event.STATUS_OPEN 
 
@@ -297,7 +299,7 @@ def edit_event(event_id):
 
     return render_template('create_event.html', form=form, editing=True, event=event)
 
-
+# Owner - it will show a confirm page, then the the status will change into Cancelled
 @main.route('/event/<int:event_id>/cancel', methods=['GET', 'POST'])
 @login_required
 def cancel_event(event_id):
@@ -338,6 +340,7 @@ def save_event_image(file_storage):
     path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_name)
     file_storage.save(path)
     return unique_name
+#random prefix for the two images with the same filename will not overwrite each other
 
 # ---------- booking history ----------
 
